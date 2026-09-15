@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ImunoLab: crie jogos sobre o sistema imune</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6ecf1; --surface:#fffafc; --ink:#2b1d3a; --muted:#6e5a7e;
+  --hema:#4a2c82; --on-hema:#ffffff; --hema-soft:#ebe2f6;
+  --eosina:#c93370; --eosina-soft:#fbdbe7; --line:#e6cfdb;
+  --code-bg:#221733; --code-ink:#f4ebf8; --code-key:#382a4e; --ok:#1f8a5b;
+  --ui:"Bricolage Grotesque", "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#150e1e; --surface:#20172c; --ink:#f1e7f6; --muted:#b3a1c2;
+    --hema:#c2a8f5; --on-hema:#1b1127; --hema-soft:#2f2344;
+    --eosina:#f27aa6; --eosina-soft:#43243a; --line:#3a2c4b;
+    --code-bg:#0f0a16; --code-ink:#f4ebf8; --code-key:#2a2038; --ok:#5fd39b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#150e1e; --surface:#20172c; --ink:#f1e7f6; --muted:#b3a1c2;
+  --hema:#c2a8f5; --on-hema:#1b1127; --hema-soft:#2f2344;
+  --eosina:#f27aa6; --eosina-soft:#43243a; --line:#3a2c4b;
+  --code-bg:#0f0a16; --code-ink:#f4ebf8; --code-key:#2a2038; --ok:#5fd39b;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--eosina);outline-offset:2px}
+.tpl{display:none}
+
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--line);min-height:56px}
+.marca{display:flex;align-items:center;gap:8px;font-weight:800;font-size:21px;letter-spacing:-0.02em;color:var(--hema);background:none;border:0;padding:0;white-space:nowrap}
+.marca i{width:22px;height:22px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 32% 34%,#f7b8d0 0 22%,transparent 23%),radial-gradient(circle at 68% 64%,#7d59c0 0 16%,transparent 17%),radial-gradient(circle,#ee9bbd,#b8578a)}
+#nomeProjeto{flex:1;min-width:0;font:inherit;font-weight:600;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:8px;padding:6px 8px}
+#nomeProjeto:hover,#nomeProjeto:focus{border-color:var(--line);background:var(--bg)}
+#status{font-size:13px;color:var(--muted);white-space:nowrap}
+.icone{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:20px;flex:none}
+body[data-tela="modelos"] .so-projeto{display:none}
+
+main{flex:1;min-height:0;position:relative}
+.tela{position:absolute;inset:0;display:none}
+body[data-tela="modelos"] #tela-modelos{display:block;overflow:auto}
+body[data-tela="codigo"] #tela-codigo{display:flex}
+body[data-tela="jogo"] #tela-jogo{display:flex}
+
+nav{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{border:0;background:none;padding:9px 4px 10px;font-size:13px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:1px}
+nav button span{font-size:21px;line-height:1.2}
+nav button[aria-current="page"]{color:var(--hema)}
+nav button[aria-current="page"] span{transform:scale(1.1)}
+
+/* Modelos */
+.modelos{max-width:760px;margin:0 auto;padding:22px 16px 40px}
+.modelos h1{font-size:clamp(28px,7vw,40px);line-height:1.05;letter-spacing:-0.03em;margin:4px 0 10px;font-weight:800}
+.modelos .intro{color:var(--muted);margin:0 0 22px;max-width:56ch}
+.modelos h2{font-size:18px;margin:30px 0 10px}
+.laminas{display:grid;gap:12px}
+@media (min-width:640px){.laminas{grid-template-columns:1fr 1fr}}
+.lamina{display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px 14px 12px 12px;position:relative;overflow:hidden}
+.lamina::after{content:"";position:absolute;right:0;top:0;bottom:0;width:14px;background:repeating-linear-gradient(135deg,var(--line) 0 3px,transparent 3px 6px)}
+.lamina:active{transform:scale(0.99)}
+.amostra{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:34px;
+  background:radial-gradient(circle at 28% 30%,rgba(255,255,255,.55) 0 12%,transparent 13%),radial-gradient(circle at 72% 70%,rgba(90,55,160,.45) 0 14%,transparent 15%),radial-gradient(circle,var(--eosina-soft) 0 55%,var(--hema-soft) 56%)}
+.lamina b{display:block;font-size:18px;letter-spacing:-0.01em}
+.lamina small{display:block;color:var(--muted);font-size:14px;margin:2px 18px 6px 0}
+.lamina em{font-style:normal;font-size:12.5px;color:var(--eosina);font-weight:600}
+.projetos{display:grid;gap:8px}
+.projeto{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 12px}
+.projeto .abrir{flex:1;min-width:0;text-align:left;background:none;border:0;padding:8px 0}
+.projeto .abrir b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.projeto .abrir small{color:var(--muted);font-size:13px}
+.projeto .excluir{border:1px solid var(--line);background:none;border-radius:8px;padding:8px 10px;font-size:14px;color:var(--muted)}
+.projeto .excluir.confirmar{background:var(--eosina);border-color:var(--eosina);color:#fff}
+.vazio,.nota{color:var(--muted);font-size:14px}
+.nota{margin-top:26px;border-left:3px solid var(--hema);padding:4px 0 4px 12px}
+
+/* Código */
+#tela-codigo{flex-direction:column;background:var(--code-bg)}
+details.missoes{background:var(--surface);border-bottom:1px solid var(--line);color:var(--ink)}
+details.missoes summary{padding:10px 14px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+details.missoes summary::-webkit-details-marker{display:none}
+details.missoes summary::after{content:"mostrar";font-weight:400;color:var(--muted);font-size:14px}
+details.missoes[open] summary::after{content:"esconder"}
+details.missoes ol{margin:0;padding:0 16px 12px 36px;font-size:15px;max-height:32vh;overflow:auto}
+details.missoes li{margin:4px 0}
+.teclas{display:flex;gap:6px;padding:8px;overflow-x:auto;background:var(--code-bg);border-bottom:1px solid #3a2c4f;scrollbar-width:none}
+.teclas::-webkit-scrollbar{display:none}
+.teclas button{flex:none;min-width:40px;height:40px;padding:0 10px;border-radius:8px;border:0;background:var(--code-key);color:var(--code-ink);font-family:var(--mono);font-size:17px}
+.teclas .acao{font-family:var(--ui);font-size:15px;font-weight:600;background:#f2a3c2;color:#2b1d3a}
+.teclas .sep{width:1px;min-width:1px;background:#4a3b60;margin:4px 2px;padding:0}
+#editor{flex:1;min-height:0;width:100%;resize:none;border:0;margin:0;padding:12px 14px 40vh;background:var(--code-bg);color:var(--code-ink);font-family:var(--mono);font-size:16px;line-height:1.55;tab-size:2;white-space:pre;overflow:auto;caret-color:#f2a3c2}
+#editor:focus{outline:none}
+.rodape-editor{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 12px;background:var(--code-bg);color:#bfaed0;font-size:13px;border-top:1px solid #3a2c4f;font-family:var(--mono)}
+.rodape-editor button{border:0;border-radius:8px;background:#f2a3c2;color:#2b1d3a;font-family:var(--ui);font-weight:700;padding:8px 14px}
+
+/* Jogo */
+#tela-jogo{flex-direction:column;background:var(--bg)}
+.barra-jogo{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--line)}
+.barra-jogo button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 12px;font-weight:600;font-size:14px}
+.barra-jogo .titulo{flex:1;font-size:14px;color:var(--muted)}
+#erro{display:none;gap:10px;align-items:flex-start;padding:10px 12px;background:var(--eosina-soft);color:var(--ink);font-size:14px;border-bottom:1px solid var(--line)}
+#erro.visivel{display:flex}
+#erro p{margin:0;flex:1}
+#erro code{font-family:var(--mono);font-size:13px}
+#erro button{border:0;border-radius:8px;background:var(--eosina);color:#fff;padding:7px 10px;font-weight:700;font-size:13px;flex:none}
+#palco{flex:1;min-height:0;width:100%;border:0;background:#fff}
+#tela-jogo.cheia{position:fixed;inset:0;z-index:40}
+body[data-tela="aparencia"] #tela-jogo{display:flex;bottom:56%}
+body[data-tela="aparencia"] #tela-jogo.cheia{bottom:0}
+body[data-tela="aparencia"] #tela-aparencia{display:block;top:44%;border-top:2px solid var(--line)}
+#tela-aparencia{overflow:auto;background:var(--surface)}
+.ap{padding:12px 16px 48px;max-width:560px}
+.ap h2{font-size:20px;margin:4px 0 4px;letter-spacing:-0.01em}
+.ap h3{font-size:15px;margin:20px 0 6px;color:var(--hema)}
+.explica{font-size:14px;color:var(--muted);margin:0}
+.explica code{font-family:var(--mono);font-size:12.5px;background:var(--hema-soft);padding:1px 4px;border-radius:4px}
+.temas{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:thin}
+.tema{flex:none;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:7px;align-items:flex-start;font-size:13.5px;font-weight:600;min-width:96px}
+.tema .bolas{display:flex;padding-left:2px}
+.tema .bolas i{width:20px;height:20px;border-radius:50%;border:2px solid var(--surface);margin-left:-6px}
+.tema .bolas i:first-child{margin-left:0}
+.linha{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.linha label{flex:1;font-size:15px}
+.linha output{font-family:var(--mono);font-size:13px;color:var(--muted);min-width:38px;text-align:right}
+.linha input[type=color]{width:56px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:3px;flex:none}
+.linha select,.campo-texto{font:inherit;font-size:15px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.campo-texto{width:100%;margin-top:4px}
+.linha input[type=range]{width:42%;accent-color:var(--eosina)}
+.restaurar.confirmar{background:var(--eosina);border-color:var(--eosina);color:#fff}
+.restaurar{margin-top:22px;width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-weight:600}
+.alternar{gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px}
+.alternar button{border:0;background:none;border-radius:8px;padding:7px 12px;font-weight:600;font-size:14px;color:var(--muted)}
+.alternar button[aria-pressed="true"]{background:var(--surface);color:var(--hema);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+#palcoInline{display:none;flex:1;min-height:0;position:relative;overflow:auto;background:#fff;color:#222;transform:translateZ(0);font-family:sans-serif}
+#palcoInline .palco-body{min-height:100%;margin:0;box-sizing:border-box}
+.sem-palco{padding:24px;max-width:46ch;margin:0 auto;color:#2b1d3a;font-family:var(--ui)}
+
+@media (min-width:900px){
+  body[data-tela="codigo"] #tela-jogo, body[data-tela="jogo"] #tela-codigo{display:flex}
+  #tela-codigo{right:50%}
+  #tela-jogo{left:50%;border-left:1px solid var(--line)}
+  #tela-jogo.cheia{left:0}
+  body[data-tela="aparencia"] #tela-aparencia{top:0;right:50%;border-top:0}
+  body[data-tela="aparencia"] #tela-jogo{bottom:0}
+  nav{display:none}
+  #editor{font-size:14.5px}
+  .so-celular{display:none !important}
+}
+@media (min-width:900px){ .so-largo{display:inline-flex} }
+@media (max-width:899px){ .so-largo{display:none !important} }
+
+/* Folha inferior */
+#fundo{position:fixed;inset:0;background:rgba(20,10,30,.45);z-index:50;display:none}
+#fundo.aberto{display:block}
+.folha{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--surface);border-radius:18px 18px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;transform:translateY(105%);transition:transform .22s ease;max-width:640px;margin:0 auto}
+.folha.aberta{transform:none}
+@media (prefers-reduced-motion:reduce){.folha{transition:none}}
+.folha .puxador{width:40px;height:4px;border-radius:4px;background:var(--line);margin:4px auto 10px}
+.folha h3{margin:4px 0 4px;font-size:18px}
+.folha .dica{color:var(--muted);font-size:14px;margin:0 0 12px}
+.folha .item{display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:0 0 8px}
+.folha .item b{display:block}
+.folha .item small{color:var(--muted);font-size:13.5px}
+.folha .item.perigo.confirmar{background:var(--eosina);color:#fff;border-color:var(--eosina)}
+.folha .item.perigo.confirmar small{color:#fff}
+.emojis{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.emojis button{width:46px;height:46px;font-size:24px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+
+#aviso{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:70;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+#aviso.visivel{opacity:1}
+@media (max-width:600px){body:not([data-tela="modelos"]) .marca span{display:none}}
+</style>
+</head>
+<body data-tela="modelos">
+<div id="app">
+  <header>
+    <button class="marca" id="irInicio" aria-label="Voltar aos modelos"><i></i><span class="so-modelos">ImunoLab</span></button>
+    <input id="nomeProjeto" class="so-projeto" aria-label="Nome do projeto" maxlength="60">
+    <span class="alternar so-projeto so-largo"><button data-lado="codigo">✏️ Código</button><button data-lado="aparencia">🎨 Aparência</button></span>
+    <span id="status" class="so-projeto"></span>
+    <button class="icone so-projeto" id="abrirMenu" aria-label="Mais opções">⋯</button>
+  </header>
+
+  <main>
+    <!-- MODELOS -->
+    <section class="tela" id="tela-modelos" aria-label="Modelos">
+      <div class="modelos">
+        <h1>Crie um jogo sobre o sistema imune</h1>
+        <p class="intro">Escolha um modelo, jogue para entender como ele funciona e depois mude o código para fazer a sua versão. Tudo roda no navegador, sem instalar nada.</p>
+        <div class="laminas" id="listaModelos"></div>
+        <h2>Seus projetos neste aparelho</h2>
+        <div class="projetos" id="listaProjetos"></div>
+        <p class="nota">Os projetos ficam salvos só neste navegador. Para entregar ao professor, abra o projeto, toque em ⋯ e use Baixar arquivo ou Copiar código.</p>
+      </div>
+    </section>
+
+    <!-- CÓDIGO -->
+    <section class="tela" id="tela-codigo" aria-label="Código">
+      <details class="missoes" id="missoes">
+        <summary>Missões deste modelo</summary>
+        <ol id="listaMissoes"></ol>
+      </details>
+      <div class="teclas" id="teclas" role="toolbar" aria-label="Atalhos de digitação">
+        <button class="acao" data-abrir="inserir">+ Inserir</button>
+        <button class="acao" data-abrir="emojis">😀</button>
+        <span class="sep"></span>
+        <button data-tecla="<">&lt;</button>
+        <button data-tecla=">">&gt;</button>
+        <button data-tecla="/">/</button>
+        <button data-tecla='""' data-volta="1">" "</button>
+        <button data-tecla="=">=</button>
+        <button data-tecla="{}" data-volta="1">{ }</button>
+        <button data-tecla="[]" data-volta="1">[ ]</button>
+        <button data-tecla="()" data-volta="1">( )</button>
+        <button data-tecla=",">,</button>
+        <button data-tecla=";">;</button>
+        <button data-tecla=":">:</button>
+        <button data-tecla="  ">⇥</button>
+        <button data-tecla="#">#</button>
+        <button data-tecla="!">!</button>
+      </div>
+      <textarea id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Código HTML do projeto"></textarea>
+      <div class="rodape-editor">
+        <span id="linhaAtual">Linha 1</span>
+        <button class="so-celular" id="testar">▶ Testar</button>
+        <button class="so-largo" id="atualizar">↻ Atualizar jogo</button>
+      </div>
+    </section>
+
+    <!-- APARÊNCIA -->
+    <section class="tela" id="tela-aparencia" aria-label="Aparência">
+      <div class="ap" id="apConteudo"></div>
+    </section>
+
+    <!-- JOGO -->
+    <section class="tela" id="tela-jogo" aria-label="Jogo">
+      <div class="barra-jogo">
+        <span class="titulo">Seu jogo</span>
+        <button id="reiniciar">↻ Reiniciar</button>
+        <button id="telaCheia">⛶ Tela cheia</button>
+      </div>
+      <div id="erro" role="alert"><p id="erroTexto"></p><button id="verErro">Ver no código</button></div>
+      <iframe id="palco" title="Pré-visualização do jogo" sandbox="allow-scripts allow-modals"></iframe>
+      <div id="palcoInline" aria-label="Jogo"></div>
+    </section>
+  </main>
+
+  <nav aria-label="Navegação">
+    <button data-ir="modelos"><span>🧫</span>Modelos</button>
+    <button data-ir="aparencia"><span>🎨</span>Aparência</button>
+    <button data-ir="codigo"><span>✏️</span>Código</button>
+    <button data-ir="jogo"><span>▶️</span>Testar</button>
+  </nav>
+</div>
+
+<div id="fundo"></div>
+<div class="folha" id="folha" role="dialog" aria-modal="true"><div class="puxador"></div><div id="folhaConteudo"></div></div>
+<div id="aviso" role="status"></div>
+
+<!-- ================= MODELOS DE CÓDIGO ================= -->
+<textarea class="tpl" id="tpl-quiz">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quem sou eu?</title>
+<style>
+  body { font-family: sans-serif; background: #173f5f; color: white; text-align: center; margin: 0; padding: 20px; }
+  h1 { color: #ffd166; margin-bottom: 4px; }
+  .card { background: white; color: #222; border-radius: 16px; padding: 20px; max-width: 420px; margin: 16px auto; }
+  .emoji { font-size: 64px; }
+  .opcao { display: block; width: 100%; margin: 8px 0; padding: 14px; font-size: 17px; border: none; border-radius: 10px; background: #e3eef5; }
+  .certo { background: #06d6a0 !important; color: white; }
+  .errado { background: #ef476f !important; color: white; }
+  #proxima { margin-top: 12px; padding: 12px 24px; font-size: 17px; border: none; border-radius: 10px; background: #118ab2; color: white; display: none; }
+</style>
+</head>
+<body>
+<h1>🔬 Quem sou eu?</h1>
+<p>Pontos: <b id="pontos">0</b></p>
+<div class="card">
+  <div class="emoji" id="emoji"></div>
+  <p id="dica"></p>
+  <div id="opcoes"></div>
+  <p id="explicacao"></p>
+  <button id="proxima" onclick="proxima()">Próxima pergunta</button>
+</div>
+
+<script>
+// ✏️ EDITE AQUI: cada bloco entre { } é uma pergunta.
+// A "resposta" precisa ser escrita igualzinho a uma das "opcoes".
+var perguntas = [
+  {
+    emoji: "🍽️",
+    dica: "Eu era um monócito no sangue. Quando entrei nos tecidos, me transformei e passei a engolir patógenos e células mortas.",
+    opcoes: ["Macrófago", "Plaqueta", "Linfócito B"],
+    resposta: "Macrófago",
+    explicacao: "Monócitos se diferenciam em macrófagos nos tecidos e fazem fagocitose."
+  },
+  {
+    emoji: "🏃",
+    dica: "Sou um fagócito menor que o macrófago. Saio do vaso sanguíneo atravessando a parede dele para chegar ao local da infecção.",
+    opcoes: ["Neutrófilo", "Eosinófilo", "Hemácia"],
+    resposta: "Neutrófilo",
+    explicacao: "Neutrófilos fazem fagocitose e saem dos vasos por diapedese."
+  },
+  {
+    emoji: "🪱",
+    dica: "Ataco principalmente patógenos multicelulares, como vermes parasitas, e também participo de reações alérgicas.",
+    opcoes: ["Eosinófilo", "Linfócito T", "Macrófago"],
+    resposta: "Eosinófilo",
+    explicacao: "Eosinófilos combatem vermes como a lombriga e atuam em alergias e inflamações."
+  },
+  {
+    emoji: "🏭",
+    dica: "Amadureço na medula óssea. Quando reconheço um epítopo, dou origem a células que fabricam anticorpos.",
+    opcoes: ["Linfócito B", "Linfócito T", "Neutrófilo"],
+    resposta: "Linfócito B",
+    explicacao: "Células B produzem anticorpos específicos para um epítopo do antígeno."
+  },
+  {
+    emoji: "🎯",
+    dica: "Amadureço no timo e destruo células do próprio corpo que estão infectadas.",
+    opcoes: ["Linfócito T", "Linfócito B", "Mastócito"],
+    resposta: "Linfócito T",
+    explicacao: "Células T atuam na resposta mediada por células."
+  },
+  {
+    emoji: "🚨",
+    dica: "Quando há uma lesão, libero histamina, que dilata os capilares e deixa o local vermelho e inchado.",
+    opcoes: ["Mastócito", "Plaqueta", "Macrófago"],
+    resposta: "Mastócito",
+    explicacao: "A histamina dos mastócitos inicia a resposta inflamatória."
+  },
+  {
+    emoji: "🧱",
+    dica: "Não sou uma célula inteira, sou um fragmento. Grudo nas fibras de colágeno e ajudo a formar o coágulo.",
+    opcoes: ["Plaqueta", "Hemácia", "Eosinófilo"],
+    resposta: "Plaqueta",
+    explicacao: "Plaquetas formam o tampão e liberam fatores da coagulação."
+  }
+];
+// Fim da área de edição. O código abaixo faz o quiz funcionar.
+
+var atual = 0;
+var pontos = 0;
+var cardOriginal = document.querySelector(".card").innerHTML;
+
+function embaralhar(lista) {
+  return lista.slice().sort(function () { return Math.random() - 0.5; });
+}
+
+function mostrar() {
+  var p = perguntas[atual];
+  document.getElementById("emoji").textContent = p.emoji;
+  document.getElementById("dica").textContent = p.dica;
+  document.getElementById("explicacao").textContent = "";
+  document.getElementById("proxima").style.display = "none";
+  var caixa = document.getElementById("opcoes");
+  caixa.innerHTML = "";
+  embaralhar(p.opcoes).forEach(function (texto) {
+    var botao = document.createElement("button");
+    botao.className = "opcao";
+    botao.textContent = texto;
+    botao.onclick = function () { responder(botao, texto); };
+    caixa.appendChild(botao);
+  });
+}
+
+function responder(botao, texto) {
+  var p = perguntas[atual];
+  document.querySelectorAll(".opcao").forEach(function (b) {
+    b.disabled = true;
+    if (b.textContent === p.resposta) { b.classList.add("certo"); }
+  });
+  if (texto === p.resposta) {
+    pontos = pontos + 1;
+  } else {
+    botao.classList.add("errado");
+  }
+  document.getElementById("pontos").textContent = pontos;
+  document.getElementById("explicacao").textContent = p.explicacao;
+  document.getElementById("proxima").style.display = "inline-block";
+}
+
+function proxima() {
+  atual = atual + 1;
+  if (atual < perguntas.length) {
+    mostrar();
+  } else {
+    document.querySelector(".card").innerHTML =
+      "<div class='emoji'>🏆</div><h2>Fim!</h2><p>Você acertou " + pontos + " de " + perguntas.length + ".</p>" +
+      "<button class='opcao' onclick='reiniciar()'>Jogar de novo</button>";
+  }
+}
+
+function reiniciar() {
+  atual = 0;
+  pontos = 0;
+  document.getElementById("pontos").textContent = 0;
+  document.querySelector(".card").innerHTML = cardOriginal;
+  mostrar();
+}
+
+mostrar();
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea class="tpl" id="tpl-defesa">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Defenda o tecido</title>
+<style>
+  body { margin: 0; font-family: sans-serif; background: #fde2e4; overflow: hidden; user-select: none; }
+  #painel { display: flex; justify-content: space-between; padding: 10px 14px; background: #8e1b3a; color: white; font-size: 16px; }
+  #tecido { position: relative; height: calc(100vh - 42px); background: radial-gradient(circle, #ffd0db, #f49ab2); overflow: hidden; }
+  .patogeno { position: absolute; font-size: 46px; cursor: pointer; transition: transform 0.2s; }
+  .patogeno.comido { transform: scale(0); }
+  #mensagem { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.93); text-align: center; padding: 24px; z-index: 5; }
+  #mensagem button { font-size: 18px; padding: 12px 28px; border: none; border-radius: 12px; background: #8e1b3a; color: white; }
+</style>
+</head>
+<body>
+<div id="painel">
+  <span>⏱️ <b id="tempo">0</b>s</span>
+  <span>🛡️ <b id="pontos">0</b> pts</span>
+  <span>🦠 <b id="carga">0</b> de <b id="limite">0</b></span>
+</div>
+<div id="tecido">
+  <div id="mensagem">
+    <h1>🛡️ Defenda o tecido!</h1>
+    <p>Um espinho furou a pele e patógenos entraram. Você é um fagócito: toque nos invasores para fagocitar antes que a infecção se espalhe.</p>
+    <button onclick="comecar()">Começar</button>
+  </div>
+</div>
+
+<script>
+// ✏️ EDITE AQUI
+var tempoDeJogo = 30;      // segundos que você precisa resistir
+var intervalo = 900;       // milissegundos entre um patógeno e outro (menor = mais difícil)
+var limite = 8;            // quantos patógenos soltos causam a derrota
+
+var patogenos = [
+  { emoji: "🦠", nome: "bactéria", pontos: 10 },
+  { emoji: "👾", nome: "vírus", pontos: 15 },
+  { emoji: "🍄", nome: "fungo", pontos: 10 },
+  { emoji: "🪱", nome: "verme", pontos: 20 }
+];
+
+var textoVitoria = "A resposta inflamatória funcionou! Os fagócitos limparam o tecido e agora ele pode cicatrizar.";
+var textoDerrota = "Patógenos demais! As citocinas avisaram o hipotálamo e veio a febre. Tente de novo.";
+// Fim da área de edição.
+
+var pontos = 0;
+var restante = 0;
+var relogio = null;
+var gerador = null;
+document.getElementById("limite").textContent = limite;
+
+function comecar() {
+  pontos = 0;
+  restante = tempoDeJogo;
+  document.getElementById("mensagem").style.display = "none";
+  gerador = setInterval(criarPatogeno, intervalo);
+  relogio = setInterval(passarTempo, 1000);
+  atualizarPainel();
+}
+
+function criarPatogeno() {
+  var tecido = document.getElementById("tecido");
+  var tipo = patogenos[Math.floor(Math.random() * patogenos.length)];
+  var el = document.createElement("div");
+  el.className = "patogeno";
+  el.textContent = tipo.emoji;
+  el.style.left = Math.random() * (tecido.clientWidth - 55) + "px";
+  el.style.top = Math.random() * (tecido.clientHeight - 55) + "px";
+  el.onpointerdown = function () {
+    if (el.classList.contains("comido")) { return; }
+    el.classList.add("comido");
+    pontos = pontos + tipo.pontos;
+    atualizarPainel();
+    setTimeout(function () { el.remove(); }, 200);
+  };
+  tecido.appendChild(el);
+  atualizarPainel();
+  if (contarSoltos() >= limite) { terminar(false); }
+}
+
+function contarSoltos() {
+  return document.querySelectorAll(".patogeno:not(.comido)").length;
+}
+
+function passarTempo() {
+  restante = restante - 1;
+  atualizarPainel();
+  if (restante <= 0) { terminar(true); }
+}
+
+function atualizarPainel() {
+  document.getElementById("tempo").textContent = restante;
+  document.getElementById("pontos").textContent = pontos;
+  document.getElementById("carga").textContent = contarSoltos();
+}
+
+function terminar(venceu) {
+  clearInterval(gerador);
+  clearInterval(relogio);
+  document.querySelectorAll(".patogeno").forEach(function (p) { p.remove(); });
+  var msg = document.getElementById("mensagem");
+  msg.innerHTML =
+    "<h1>" + (venceu ? "🎉 Vitória!" : "🤒 Infecção!") + "</h1>" +
+    "<p>" + (venceu ? textoVitoria : textoDerrota) + "</p>" +
+    "<p><b>" + pontos + " pontos</b></p>" +
+    "<button onclick='comecar()'>Jogar de novo</button>";
+  msg.style.display = "flex";
+}
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea class="tpl" id="tpl-pares">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memória imune</title>
+<style>
+  body { font-family: sans-serif; background: #2d1e4a; color: white; text-align: center; margin: 0; padding: 16px; }
+  h1 { margin: 6px 0; }
+  #grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 520px; margin: 14px auto; }
+  .carta { min-height: 92px; border: none; border-radius: 12px; font-size: 14px; padding: 8px; background: #7b5cc4; color: white; }
+  .carta.virada { background: white; color: #2d1e4a; }
+  .carta.achou { background: #06d6a0; color: #10362a; }
+</style>
+</head>
+<body>
+<h1>🧠 Memória imune</h1>
+<p>Encontre o termo e a sua definição. Jogadas: <b id="jogadas">0</b></p>
+<div id="grade"></div>
+
+<script>
+// ✏️ EDITE AQUI: cada linha é um par ["termo", "definição"].
+var pares = [
+  ["Antígeno", "Substância estranha reconhecida por linfócitos e anticorpos"],
+  ["Epítopo", "Parte específica do antígeno onde o anticorpo se liga"],
+  ["Diapedese", "Saída dos leucócitos pela parede do vaso"],
+  ["Histamina", "Dilata os capilares na inflamação"],
+  ["Interferon", "Proteína que impede a replicação de vírus"],
+  ["Fibrina", "Rede que forma o coágulo"]
+];
+var textoCarta = "❓";
+// Fim da área de edição.
+
+var cartas = [];
+var abertas = [];
+var jogadas = 0;
+var achados = 0;
+
+pares.forEach(function (par, i) {
+  cartas.push({ texto: par[0], par: i });
+  cartas.push({ texto: par[1], par: i });
+});
+cartas.sort(function () { return Math.random() - 0.5; });
+
+var grade = document.getElementById("grade");
+cartas.forEach(function (c) {
+  var b = document.createElement("button");
+  b.className = "carta";
+  b.textContent = textoCarta;
+  b.onclick = function () { virar(b, c); };
+  grade.appendChild(b);
+});
+
+function virar(botao, carta) {
+  if (abertas.length === 2 || botao.classList.contains("virada")) { return; }
+  botao.classList.add("virada");
+  botao.textContent = carta.texto;
+  abertas.push({ botao: botao, carta: carta });
+  if (abertas.length === 2) {
+    jogadas = jogadas + 1;
+    document.getElementById("jogadas").textContent = jogadas;
+    if (abertas[0].carta.par === abertas[1].carta.par) {
+      abertas.forEach(function (a) { a.botao.classList.add("achou"); });
+      abertas = [];
+      achados = achados + 1;
+      if (achados === pares.length) {
+        setTimeout(function () { alert("Parabéns! Você terminou em " + jogadas + " jogadas."); }, 300);
+      }
+    } else {
+      setTimeout(function () {
+        abertas.forEach(function (a) {
+          a.botao.classList.remove("virada");
+          a.botao.textContent = textoCarta;
+        });
+        abertas = [];
+      }, 1200);
+    }
+  }
+}
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea class="tpl" id="tpl-historia">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O espinho no pé</title>
+<style>
+  body { font-family: Georgia, serif; background: #fff4e6; color: #3b2314; margin: 0; padding: 20px; }
+  .cena { max-width: 460px; margin: 0 auto; text-align: center; }
+  .emoji { font-size: 80px; margin: 10px 0; }
+  p { font-size: 18px; line-height: 1.5; }
+  .escolha { display: block; width: 100%; margin: 10px 0; padding: 14px; font-size: 17px; border: 2px solid #c0562a; border-radius: 12px; background: white; color: #3b2314; }
+</style>
+</head>
+<body>
+<div class="cena">
+  <div class="emoji" id="emoji"></div>
+  <p id="texto"></p>
+  <div id="escolhas"></div>
+</div>
+
+<script>
+// ✏️ EDITE AQUI: cada cena tem um nome, um emoji, um texto e escolhas.
+// Em cada escolha, "vai" é o nome da próxima cena.
+var cenas = {
+  inicio: {
+    emoji: "🌵",
+    texto: "Você pisou num espinho! A pele, sua barreira, foi rompida e bactérias entraram no tecido. O que acontece primeiro?",
+    escolhas: [
+      { texto: "Mastócitos liberam histamina", vai: "histamina" },
+      { texto: "Nada, o corpo ignora", vai: "ignorar" }
+    ]
+  },
+  ignorar: {
+    emoji: "😬",
+    texto: "Não é assim! A imunidade inata age rápido. Sem ela, as bactérias se multiplicariam à vontade.",
+    escolhas: [ { texto: "Tentar de novo", vai: "inicio" } ]
+  },
+  histamina: {
+    emoji: "🚨",
+    texto: "A histamina dilata os capilares e deixa os vasos mais permeáveis. O local fica vermelho, quente e inchado. Quem chega agora?",
+    escolhas: [
+      { texto: "Neutrófilos, atravessando a parede do vaso", vai: "diapedese" },
+      { texto: "Os anticorpos, logo no primeiro minuto", vai: "cedoDemais" }
+    ]
+  },
+  cedoDemais: {
+    emoji: "🐢",
+    texto: "Calma! A resposta adaptativa é mais lenta. Primeiro quem trabalha é a imunidade inata.",
+    escolhas: [ { texto: "Voltar", vai: "histamina" } ]
+  },
+  diapedese: {
+    emoji: "🏃",
+    texto: "Isso é a diapedese! Guiados pela quimiotaxia, os neutrófilos encontram as bactérias e se prendem a elas. Qual é a próxima etapa?",
+    escolhas: [
+      { texto: "Ingestão, formando o fagossomo", vai: "fagocitose" },
+      { texto: "Formar anticorpos", vai: "erroFagocitose" }
+    ]
+  },
+  erroFagocitose: {
+    emoji: "🤔",
+    texto: "Anticorpos são produzidos por células derivadas do linfócito B. O neutrófilo segue as etapas da fagocitose.",
+    escolhas: [ { texto: "Voltar", vai: "diapedese" } ]
+  },
+  fagocitose: {
+    emoji: "🍽️",
+    texto: "O lisossomo se funde ao fagossomo e as bactérias são digeridas. Mas o espinho também cortou um vasinho e está sangrando! Quem resolve?",
+    escolhas: [
+      { texto: "As plaquetas", vai: "plaquetas" },
+      { texto: "Os eosinófilos", vai: "eosinofilo" }
+    ]
+  },
+  eosinofilo: {
+    emoji: "🪱",
+    texto: "Eosinófilos são especialistas em vermes parasitas, não em sangramento.",
+    escolhas: [ { texto: "Voltar", vai: "fagocitose" } ]
+  },
+  plaquetas: {
+    emoji: "🧱",
+    texto: "As plaquetas grudam no colágeno e formam um tampão. A trombina transforma fibrinogênio em fibrina, que forma uma rede: coágulo pronto!",
+    escolhas: [ { texto: "Ver o final", vai: "fim" } ]
+  },
+  fim: {
+    emoji: "🩹",
+    texto: "Tecido limpo e cicatrizando. Você acompanhou toda a resposta inflamatória!",
+    escolhas: [ { texto: "Jogar de novo", vai: "inicio" } ]
+  }
+};
+// Fim da área de edição.
+
+function mostrarCena(nome) {
+  var cena = cenas[nome];
+  if (!cena) {
+    alert("Não existe cena chamada " + nome + ". Confira o nome em 'vai'.");
+    return;
+  }
+  document.getElementById("emoji").textContent = cena.emoji;
+  document.getElementById("texto").textContent = cena.texto;
+  var caixa = document.getElementById("escolhas");
+  caixa.innerHTML = "";
+  cena.escolhas.forEach(function (e) {
+    var b = document.createElement("button");
+    b.className = "escolha";
+    b.textContent = e.texto;
+    b.onclick = function () { mostrarCena(e.vai); };
+    caixa.appendChild(b);
+  });
+}
+
+mostrarCena("inicio");
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea class="tpl" id="tpl-ordem">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coloque em ordem</title>
+<style>
+  body { font-family: sans-serif; background: #e8f6f3; color: #123c35; margin: 0; padding: 18px; text-align: center; }
+  .caixa { max-width: 460px; margin: 0 auto; }
+  .etapa { display: block; width: 100%; margin: 8px 0; padding: 13px; font-size: 16px; border: 2px solid #1b7f6b; border-radius: 10px; background: white; color: #123c35; }
+  .etapa.tremer { animation: tremer 0.3s; border-color: #e63946; }
+  @keyframes tremer { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  ol { text-align: left; background: #1b7f6b; color: white; border-radius: 10px; padding: 12px 12px 12px 34px; min-height: 30px; }
+  #seguir { display: none; padding: 12px 24px; font-size: 17px; border: none; border-radius: 10px; background: #123c35; color: white; }
+</style>
+</head>
+<body>
+<div class="caixa">
+  <h1 id="titulo"></h1>
+  <p>Toque nas etapas na ordem certa. Erros: <b id="erros">0</b></p>
+  <ol id="certas"></ol>
+  <div id="opcoes"></div>
+  <button id="seguir" onclick="proxima()">Próxima sequência</button>
+</div>
+
+<script>
+// ✏️ EDITE AQUI: escreva as etapas já na ordem correta. O jogo embaralha sozinho.
+var sequencias = [
+  {
+    titulo: "Fases da fagocitose",
+    etapas: ["Quimiotaxia", "Adesão", "Ingestão", "Digestão", "Morte"]
+  },
+  {
+    titulo: "Resposta inflamatória",
+    etapas: ["Mastócitos liberam histamina", "Capilares dilatam e ficam permeáveis", "Neutrófilos chegam por diapedese", "Neutrófilos fagocitam os patógenos", "O tecido cicatriza"]
+  },
+  {
+    titulo: "Coagulação do sangue",
+    etapas: ["Plaquetas aderem ao colágeno", "Forma-se o tampão de plaquetas", "Protrombina vira trombina", "Fibrinogênio vira fibrina", "A rede de fibrina forma o coágulo"]
+  }
+];
+// Fim da área de edição.
+
+var indice = 0;
+var passo = 0;
+var erros = 0;
+
+function montar() {
+  var seq = sequencias[indice];
+  passo = 0;
+  document.getElementById("titulo").textContent = seq.titulo;
+  document.getElementById("certas").innerHTML = "";
+  document.getElementById("seguir").style.display = "none";
+  var caixa = document.getElementById("opcoes");
+  caixa.innerHTML = "";
+  seq.etapas.slice().sort(function () { return Math.random() - 0.5; }).forEach(function (texto) {
+    var b = document.createElement("button");
+    b.className = "etapa";
+    b.textContent = texto;
+    b.onclick = function () { escolher(b, texto); };
+    caixa.appendChild(b);
+  });
+}
+
+function escolher(botao, texto) {
+  var seq = sequencias[indice];
+  if (texto === seq.etapas[passo]) {
+    var item = document.createElement("li");
+    item.textContent = texto;
+    document.getElementById("certas").appendChild(item);
+    botao.remove();
+    passo = passo + 1;
+    if (passo === seq.etapas.length) {
+      document.getElementById("seguir").style.display = "inline-block";
+      if (indice === sequencias.length - 1) {
+        document.getElementById("seguir").textContent = "Recomeçar";
+      }
+    }
+  } else {
+    erros = erros + 1;
+    document.getElementById("erros").textContent = erros;
+    botao.classList.remove("tremer");
+    void botao.offsetWidth;
+    botao.classList.add("tremer");
+  }
+}
+
+function proxima() {
+  indice = indice + 1;
+  if (indice >= sequencias.length) {
+    indice = 0;
+    erros = 0;
+    document.getElementById("erros").textContent = 0;
+    document.getElementById("seguir").textContent = "Próxima sequência";
+  }
+  montar();
+}
+
+montar();
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea class="tpl" id="tpl-vf">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fato ou fake?</title>
+<style>
+  body { font-family: sans-serif; background: #fff8d6; color: #2a2a2a; margin: 0; padding: 18px; text-align: center; }
+  .caixa { max-width: 460px; margin: 0 auto; }
+  h1 { color: #1d4ed8; }
+  .frase { background: white; border-radius: 14px; padding: 20px; font-size: 19px; box-shadow: 0 3px 0 #e5d68a; min-height: 110px; }
+  .botoes { display: flex; gap: 10px; margin: 16px 0; }
+  .botoes button { flex: 1; padding: 16px; font-size: 18px; font-weight: bold; border: none; border-radius: 12px; color: white; }
+  #fato { background: #16a34a; }
+  #fake { background: #dc2626; }
+  #resultado { font-size: 16px; min-height: 60px; }
+  #seguir { display: none; padding: 12px 24px; font-size: 16px; border: none; border-radius: 10px; background: #1d4ed8; color: white; }
+</style>
+</head>
+<body>
+<div class="caixa">
+  <h1>💉 Fato ou fake?</h1>
+  <p>Acertos: <b id="acertos">0</b></p>
+  <div class="frase" id="frase"></div>
+  <div class="botoes">
+    <button id="fato" onclick="responder(true)">✅ Fato</button>
+    <button id="fake" onclick="responder(false)">❌ Fake</button>
+  </div>
+  <p id="resultado"></p>
+  <button id="seguir" onclick="proxima()">Próxima</button>
+</div>
+
+<script>
+// ✏️ EDITE AQUI: "verdade" é true (fato) ou false (fake).
+var afirmacoes = [
+  {
+    texto: "Vacinas podem ser feitas com partes de antígenos ou com patógenos mortos ou atenuados.",
+    verdade: true,
+    porque: "Assim o corpo conhece o antígeno sem ficar doente e forma células de memória."
+  },
+  {
+    texto: "O soro antiofídico deixa a pessoa imune ao veneno da cobra para sempre.",
+    verdade: false,
+    porque: "O soro traz anticorpos prontos (imunidade passiva). Eles são degradados e não geram memória."
+  },
+  {
+    texto: "Vacinar protege só quem tomou a vacina.",
+    verdade: false,
+    porque: "Com menos patógenos circulando, a vacinação protege também quem não pode ser vacinado."
+  },
+  {
+    texto: "Se a cobertura vacinal cair, doenças eliminadas, como a poliomielite, podem voltar.",
+    verdade: true,
+    porque: "A pólio foi eliminada no Brasil com vacinação, e a queda na cobertura aumenta o risco de retorno."
+  },
+  {
+    texto: "Vacinas causam autismo.",
+    verdade: false,
+    porque: "Estudos com milhões de crianças não encontraram relação. O artigo que espalhou essa ideia foi retirado da revista por fraude."
+  },
+  {
+    texto: "Na segunda vez que encontramos o mesmo patógeno, a resposta imune costuma ser mais rápida.",
+    verdade: true,
+    porque: "É a memória imunológica, feita pelas células B e T de memória."
+  }
+];
+// Fim da área de edição.
+
+var atual = 0;
+var acertos = 0;
+var respondeu = false;
+
+function mostrar() {
+  respondeu = false;
+  document.getElementById("frase").textContent = afirmacoes[atual].texto;
+  document.getElementById("resultado").textContent = "";
+  document.getElementById("seguir").style.display = "none";
+}
+
+function responder(escolha) {
+  if (respondeu) { return; }
+  respondeu = true;
+  var a = afirmacoes[atual];
+  var acertou = escolha === a.verdade;
+  if (acertou) {
+    acertos = acertos + 1;
+    document.getElementById("acertos").textContent = acertos;
+  }
+  document.getElementById("resultado").textContent =
+    (acertou ? "Acertou! " : "Errou. ") + (a.verdade ? "É fato. " : "É fake. ") + a.porque;
+  document.getElementById("seguir").style.display = "inline-block";
+}
+
+function proxima() {
+  atual = atual + 1;
+  if (atual < afirmacoes.length) {
+    mostrar();
+  } else {
+    document.getElementById("frase").textContent = "Fim! Você acertou " + acertos + " de " + afirmacoes.length + ".";
+    document.getElementById("resultado").textContent = "Compartilhe o que aprendeu e não repasse notícias sem checar a fonte.";
+    document.getElementById("seguir").style.display = "none";
+    respondeu = true;
+  }
+}
+
+mostrar();
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea class="tpl" id="tpl-branco">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu projeto</title>
+<style>
+  body { font-family: sans-serif; background: #eef6ff; color: #1e2a44; text-align: center; margin: 0; padding: 24px; }
+  h1 { color: #d6336c; }
+  button { padding: 12px 24px; font-size: 18px; border: none; border-radius: 12px; background: #1e2a44; color: white; }
+</style>
+</head>
+<body>
+<h1>💉 Vacina é proteção</h1>
+<p>Escreva aqui a mensagem da sua campanha.</p>
+<button onclick="mostrarDica()">Toque aqui</button>
+<p id="dica"></p>
+
+<script>
+function mostrarDica() {
+  document.getElementById("dica").textContent = "A vacina ensina o corpo a reconhecer o antígeno antes da doença chegar.";
+}
+</script>
+</body>
+</html>
+</textarea>
+
+<script>
+(function () {
+  "use strict";
+
+  var agendar = window.setTimeout.bind(window);
+  var desagendar = window.clearTimeout.bind(window);
+
+  var MODELOS = [
+    {
+      id: "quiz", nome: "Quem sou eu?", emoji: "🔬",
+      desc: "Cada célula de defesa dá uma dica e você adivinha quem é.",
+      tema: "Células de defesa e linfócitos",
+      missoes: [
+        "Jogue uma vez inteira. Depois troque o emoji e a dica da primeira pergunta.",
+        "Crie uma pergunta nova sobre o basófilo ou sobre o interferon (use + Inserir e escolha Nova pergunta).",
+        "Na aba Aparência, escolha um tema e depois ajuste as cores do jeito da sua dupla.",
+        "Crie uma pergunta com quatro opções em vez de três.",
+        "Desafio: faça uma pergunta que compare vacina e soro."
+      ],
+      snippets: [{ nome: "Nova pergunta", ajuda: "Coloque o cursor logo depois da última } da lista perguntas, antes do ].", codigo: ',\n  {\n    emoji: "❓",\n    dica: "Escreva a dica aqui",\n    opcoes: ["Resposta certa", "Opção errada", "Outra errada"],\n    resposta: "Resposta certa",\n    explicacao: "Explique por que essa é a resposta"\n  }' }]
+    },
+    {
+      id: "defesa", nome: "Defenda o tecido", emoji: "🛡️",
+      desc: "Jogo de ação: você é um fagócito e precisa eliminar os patógenos a tempo.",
+      tema: "Fagocitose e resposta inflamatória",
+      missoes: [
+        "Jogue e anote sua pontuação. Depois mude tempoDeJogo para 45.",
+        "Deixe o jogo mais difícil diminuindo o valor de intervalo.",
+        "Adicione um protozoário na lista patogenos (use + Inserir e escolha Novo patógeno).",
+        "Reescreva textoVitoria explicando o que os fagócitos fizeram, com as etapas da fagocitose.",
+        "Desafio: na aba Aparência, pinte o tecido de vermelho para representar a inflamação."
+      ],
+      snippets: [{ nome: "Novo patógeno", ajuda: "Coloque o cursor logo depois da última } da lista patogenos, antes do ].", codigo: ',\n  { emoji: "🧫", nome: "protozoário", pontos: 25 }' }]
+    },
+    {
+      id: "pares", nome: "Memória imune", emoji: "🧠",
+      desc: "Jogo da memória que liga cada termo à sua definição.",
+      tema: "Antígeno, anticorpo, inflamação e coagulação",
+      missoes: [
+        "Jogue uma partida. Depois reescreva uma definição com suas próprias palavras.",
+        "Adicione um par sobre a trombina ou o fibrinogênio (use + Inserir e escolha Novo par).",
+        "Troque o ❓ das cartas por outro emoji em textoCarta.",
+        "Na aba Aparência, mude as cores das cartas e o número de colunas.",
+        "Desafio: crie pares suficientes para encher uma grade de 4 colunas."
+      ],
+      snippets: [{ nome: "Novo par", ajuda: "Coloque o cursor logo depois do último ] de um par, antes do ] que fecha a lista.", codigo: ',\n  ["Termo", "Definição do termo"]' }]
+    },
+    {
+      id: "historia", nome: "O espinho no pé", emoji: "🌵",
+      desc: "História de escolhas que acompanha o corpo desde a lesão até a cicatrização.",
+      tema: "Inflamação, fagocitose e coagulação",
+      missoes: [
+        "Jogue passando por todos os caminhos. Mude o texto da cena inicio.",
+        "Crie uma cena nova sobre a febre e o hipotálamo (use + Inserir e escolha Nova cena).",
+        "Ligue a cena nova a uma escolha de outra cena usando vai: \"nomeDaCena\".",
+        "Crie um caminho em que a pessoa tem poucas plaquetas e o sangramento demora a parar.",
+        "Desafio: na aba Aparência, escolha letra e cores que combinem com a sua história."
+      ],
+      snippets: [
+        { nome: "Nova cena", ajuda: "Coloque o cursor logo depois da } que fecha a última cena, antes da } que fecha cenas.", codigo: ',\n  novaCena: {\n    emoji: "🌡️",\n    texto: "Escreva o que acontece nesta cena",\n    escolhas: [\n      { texto: "Voltar ao início", vai: "inicio" }\n    ]\n  }' },
+        { nome: "Nova escolha", ajuda: "Coloque o cursor logo depois da } de uma escolha, dentro de escolhas.", codigo: ',\n      { texto: "Texto do botão", vai: "novaCena" }' }
+      ]
+    },
+    {
+      id: "ordem", nome: "Coloque em ordem", emoji: "🔢",
+      desc: "Toque nas etapas de um processo biológico na sequência certa.",
+      tema: "Fagocitose, inflamação e coagulação",
+      missoes: [
+        "Jogue as três sequências. Qual teve mais erros?",
+        "Crie uma sequência sobre a produção de soro antiofídico (use + Inserir e escolha Nova sequência).",
+        "Crie uma sequência sobre como a vacina gera memória imunológica.",
+        "Na aba Aparência, mude as cores dos botões e da lista de etapas certas.",
+        "Desafio: escreva uma sequência de 6 etapas."
+      ],
+      snippets: [{ nome: "Nova sequência", ajuda: "Coloque o cursor logo depois da última } da lista sequencias, antes do ].", codigo: ',\n  {\n    titulo: "Nome do processo",\n    etapas: ["Primeira etapa", "Segunda etapa", "Terceira etapa"]\n  }' }]
+    },
+    {
+      id: "vf", nome: "Fato ou fake?", emoji: "💉",
+      desc: "Afirmações sobre vacinas e soros para separar ciência de desinformação.",
+      tema: "Vacinas, soros e fake news",
+      missoes: [
+        "Jogue e leia as explicações. Depois reescreva uma delas de um jeito mais simples.",
+        "Pesquise uma fake news real sobre vacinas e transforme em afirmação (use + Inserir e escolha Nova afirmação).",
+        "Crie uma afirmação sobre a diferença entre imunidade ativa e passiva.",
+        "Na aba Aparência, mude as cores dos botões Fato e Fake.",
+        "Desafio: use o jogo como parte da campanha da seção Você é o autor."
+      ],
+      snippets: [{ nome: "Nova afirmação", ajuda: "Coloque o cursor logo depois da última } da lista afirmacoes, antes do ].", codigo: ',\n  {\n    texto: "Escreva a afirmação",\n    verdade: false,\n    porque: "Explique com base na ciência"\n  }' }]
+    },
+    {
+      id: "branco", nome: "Página livre", emoji: "📄",
+      desc: "Um começo simples para criar do seu jeito: cartaz, jogo ou apresentação.",
+      tema: "Campanha de vacinação ou tema livre",
+      missoes: [
+        "Troque o título e escreva a mensagem principal da sua campanha.",
+        "Adicione um emoji grande e uma caixa colorida (use + Inserir).",
+        "Mude o texto que aparece quando o botão é tocado.",
+        "Desafio: crie três botões, cada um mostrando uma informação diferente sobre vacinas."
+      ],
+      snippets: []
+    }
+  ];
+
+  var SNIPPETS_GERAIS = [
+    { nome: "Título", ajuda: "Coloque dentro do body.", codigo: "<h2>Meu título</h2>\n" },
+    { nome: "Parágrafo", ajuda: "Coloque dentro do body.", codigo: "<p>Escreva seu texto aqui.</p>\n" },
+    { nome: "Emoji grande", ajuda: "Coloque dentro do body.", codigo: '<div style="font-size: 64px;">🦠</div>\n' },
+    { nome: "Caixa colorida", ajuda: "Coloque dentro do body.", codigo: '<div style="background: #ffd6e5; padding: 14px; border-radius: 12px;">\n  Conteúdo da caixa\n</div>\n' },
+    { nome: "Botão com mensagem", ajuda: "Coloque dentro do body.", codigo: '<button onclick="alert(\'Olá, sistema imune!\')">Toque aqui</button>\n' }
+  ];
+
+  var EMOJIS = ["🦠","👾","🍄","🪱","🧫","🔬","🧬","🩸","💉","🛡️","🍽️","🏃","🧱","🚨","🌡️","🤒","😷","🩹","🧠","🫁","❤️","🎯","🏆","✅","❌","❓","⭐","🎉"];
+
+  var CHAVE = "imunolab.v1";
+  var estado = { projetos: [], atualId: null };
+  var projeto = null;
+  var linhaDoErro = null;
+  var larguraGrande = window.matchMedia("(min-width: 900px)");
+
+  var $ = function (id) { return document.getElementById(id); };
+  var editor = $("editor");
+  var palco = $("palco");
+
+  // ---------- armazenamento ----------
+  function carregar() {
+    try {
+      var salvo = localStorage.getItem(CHAVE);
+      if (salvo) { estado = JSON.parse(salvo); }
+    } catch (e) { /* segue sem salvar */ }
+    if (!estado || !Array.isArray(estado.projetos)) { estado = { projetos: [], atualId: null }; }
+  }
+  function gravar() {
+    try { localStorage.setItem(CHAVE, JSON.stringify(estado)); return true; }
+    catch (e) { return false; }
+  }
+
+  // ---------- utilidades ----------
+  var timerAviso;
+  function aviso(texto) {
+    var el = $("aviso");
+    el.textContent = texto;
+    el.classList.add("visivel");
+    desagendar(timerAviso);
+    timerAviso = agendar(function () { el.classList.remove("visivel"); }, 2400);
+  }
+  function modeloDe(id) {
+    for (var i = 0; i < MODELOS.length; i++) { if (MODELOS[i].id === id) { return MODELOS[i]; } }
+    return MODELOS[MODELOS.length - 1];
+  }
+  function codigoModelo(id) { return $("tpl-" + id).value.replace(/^\n/, ""); }
+  function dataCurta(ms) {
+    var d = new Date(ms);
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " às " +
+      d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function el(tag, attrs, filhos) {
+    var e = document.createElement(tag);
+    if (attrs) { Object.keys(attrs).forEach(function (k) { if (k === "text") { e.textContent = attrs[k]; } else { e.setAttribute(k, attrs[k]); } }); }
+    (filhos || []).forEach(function (f) { e.appendChild(f); });
+    return e;
+  }
+
+  // ---------- telas ----------
+  function irPara(tela) {
+    document.body.setAttribute("data-tela", tela);
+    document.querySelectorAll("nav button").forEach(function (b) {
+      if (b.getAttribute("data-ir") === tela) { b.setAttribute("aria-current", "page"); }
+      else { b.removeAttribute("aria-current"); }
+    });
+    if (tela === "modelos") {
+      $("tela-jogo").classList.remove("cheia");
+      pararJogo();
+      desenharProjetos();
+    } else if (tela === "aparencia") {
+      desenharAparencia();
+      rodar();
+    } else if (tela === "jogo" || larguraGrande.matches) {
+      rodar();
+    }
+    document.querySelectorAll(".alternar button").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-lado") === (tela === "aparencia" ? "aparencia" : "codigo") ? "true" : "false");
+    });
+  }
+
+  function desenharModelos() {
+    var lista = $("listaModelos");
+    MODELOS.forEach(function (m) {
+      var b = el("button", { "class": "lamina" }, [
+        el("span", { "class": "amostra", "aria-hidden": "true", text: m.emoji }),
+        el("span", null, [el("b", { text: m.nome }), el("small", { text: m.desc }), el("em", { text: m.tema })])
+      ]);
+      b.addEventListener("click", function () { novoProjeto(m.id); });
+      lista.appendChild(b);
+    });
+  }
+
+  function desenharProjetos() {
+    var lista = $("listaProjetos");
+    lista.innerHTML = "";
+    if (!estado.projetos.length) {
+      lista.appendChild(el("p", { "class": "vazio", text: "Nenhum projeto ainda. Escolha um modelo acima e ele aparece aqui, salvo automaticamente." }));
+      return;
+    }
+    estado.projetos.slice().sort(function (a, b) { return b.atualizado - a.atualizado; }).forEach(function (p) {
+      var abrir = el("button", { "class": "abrir" }, [
+        el("b", { text: p.nome }),
+        el("small", { text: modeloDe(p.tipo).nome + ", alterado em " + dataCurta(p.atualizado) })
+      ]);
+      abrir.addEventListener("click", function () { abrirProjeto(p.id, "codigo"); });
+      var excluir = el("button", { "class": "excluir", text: "Excluir" });
+      excluir.addEventListener("click", function () {
+        if (!excluir.classList.contains("confirmar")) {
+          excluir.classList.add("confirmar");
+          excluir.textContent = "Confirmar";
+          agendar(function () { excluir.classList.remove("confirmar"); excluir.textContent = "Excluir"; }, 3000);
+          return;
+        }
+        estado.projetos = estado.projetos.filter(function (x) { return x.id !== p.id; });
+        if (estado.atualId === p.id) { estado.atualId = null; }
+        gravar();
+        desenharProjetos();
+        aviso("Projeto excluído");
+      });
+      lista.appendChild(el("div", { "class": "projeto" }, [abrir, excluir]));
+    });
+  }
+
+  // ---------- projetos ----------
+  function novoProjeto(tipo) {
+    var m = modeloDe(tipo);
+    var p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), nome: m.nome, tipo: tipo, codigo: codigoModelo(tipo), atualizado: Date.now() };
+    estado.projetos.push(p);
+    gravar();
+    abrirProjeto(p.id, "jogo");
+  }
+
+  function abrirProjeto(id, tela) {
+    projeto = null;
+    for (var i = 0; i < estado.projetos.length; i++) { if (estado.projetos[i].id === id) { projeto = estado.projetos[i]; } }
+    if (!projeto) { return; }
+    estado.atualId = id;
+    gravar();
+    editor.value = projeto.codigo;
+    editor.scrollTop = 0;
+    $("nomeProjeto").value = projeto.nome;
+    $("status").textContent = "Salvo";
+    var m = modeloDe(projeto.tipo);
+    var ol = $("listaMissoes");
+    ol.innerHTML = "";
+    m.missoes.forEach(function (t) { ol.appendChild(el("li", { text: t })); });
+    $("missoes").open = false;
+    atualizarLinha();
+    irPara(tela);
+  }
+
+  var timerSalvar, timerAoVivo;
+  function salvarAgora() {
+    if (!projeto) { return; }
+    projeto.codigo = editor.value;
+    projeto.atualizado = Date.now();
+    $("status").textContent = gravar() ? "Salvo" : "Não salvou";
+  }
+  editor.addEventListener("input", function () {
+    $("status").textContent = "Salvando";
+    desagendar(timerSalvar);
+    timerSalvar = agendar(salvarAgora, 500);
+    if (larguraGrande.matches) {
+      desagendar(timerAoVivo);
+      timerAoVivo = agendar(rodar, 900);
+    }
+  });
+  $("nomeProjeto").addEventListener("input", function () {
+    if (!projeto) { return; }
+    projeto.nome = this.value.trim() || modeloDe(projeto.tipo).nome;
+    projeto.atualizado = Date.now();
+    gravar();
+  });
+
+
+  // ---------- aparência ----------
+  // Tudo que o aluno escolhe aqui vira CSS dentro de <style id="aparencia"> no código.
+  var LETRAS = [
+    ["Padrão", "sans-serif"],
+    ["Arredondada", "'Trebuchet MS', Verdana, sans-serif"],
+    ["Livro", "Georgia, 'Times New Roman', serif"],
+    ["Máquina de escrever", "'Courier New', Courier, monospace"],
+    ["Divertida", "'Comic Sans MS', 'Chalkboard SE', cursive"],
+    ["Firme", "Impact, 'Arial Black', sans-serif"]
+  ];
+  var TEMAS = [
+    { nome: "Microscópio", fundo: "#2d1e4a", texto: "#f5f0ff", destaque: "#ffd166", superficie: "#ffffff", textoSup: "#2d1e4a", suave: "#ece4ff", botao: "#7b5cc4", textoBotao: "#ffffff" },
+    { nome: "Sangue", fundo: "#6a0f24", texto: "#fff1f3", destaque: "#ffc8dd", superficie: "#fff1f3", textoSup: "#4a0a19", suave: "#ffd6de", botao: "#e63946", textoBotao: "#ffffff" },
+    { nome: "Vacina", fundo: "#e0f2fe", texto: "#0c2d48", destaque: "#0369a1", superficie: "#ffffff", textoSup: "#0c2d48", suave: "#dbeafe", botao: "#0284c7", textoBotao: "#ffffff" },
+    { nome: "Amazônia", fundo: "#1b4332", texto: "#f1faee", destaque: "#ffd166", superficie: "#f1faee", textoSup: "#1b4332", suave: "#d8f3dc", botao: "#52b788", textoBotao: "#081c15" },
+    { nome: "Noite", fundo: "#0f172a", texto: "#e2e8f0", destaque: "#f472b6", superficie: "#1e293b", textoSup: "#e2e8f0", suave: "#334155", botao: "#6366f1", textoBotao: "#ffffff" },
+    { nome: "Algodão doce", fundo: "#fdf2f8", texto: "#4a044e", destaque: "#be185d", superficie: "#ffffff", textoSup: "#4a044e", suave: "#fce7f3", botao: "#a855f7", textoBotao: "#ffffff" }
+  ];
+  function cor(sel, prop, rotulo, padrao, papel) { return { tipo: "cor", sel: sel, prop: prop, rotulo: rotulo, padrao: padrao, papel: papel }; }
+  function letra(padrao) { return { tipo: "letra", sel: "body", prop: "font-family", rotulo: "Tipo de letra", padrao: padrao || "sans-serif" }; }
+  function tamanho(sel, rotulo, min, max, padrao) { return { tipo: "tamanho", sel: sel, prop: "font-size", rotulo: rotulo, min: min, max: max, padrao: padrao }; }
+  function colunas(padrao) { return { tipo: "colunas", sel: "#grade", prop: "grid-template-columns", rotulo: "Colunas de cartas", padrao: padrao }; }
+
+  var APARENCIA = {
+    quiz: [
+      cor("body", "background", "Fundo da página", "#173f5f", "fundo"),
+      cor("body", "color", "Texto da página", "#ffffff", "texto"),
+      cor("h1", "color", "Título", "#ffd166", "destaque"),
+      cor(".card", "background", "Cartão da pergunta", "#ffffff", "superficie"),
+      cor(".card", "color", "Texto do cartão", "#222222", "textoSup"),
+      cor(".opcao", "background", "Botões de resposta", "#e3eef5", "suave"),
+      cor(".opcao", "color", "Texto das respostas", "#222222", "textoSup"),
+      cor("#proxima", "background", "Botão Próxima pergunta", "#118ab2", "botao"),
+      cor("#proxima", "color", "Texto do botão Próxima", "#ffffff", "textoBotao"),
+      letra(),
+      tamanho(".emoji", "Tamanho do emoji", 30, 110, 64)
+    ],
+    defesa: [
+      cor("#tecido", "background", "Cor do tecido", "#f7b5c6", "fundo"),
+      cor("#painel", "background", "Barra do placar", "#8e1b3a", "botao"),
+      cor("#painel", "color", "Texto do placar", "#ffffff", "textoBotao"),
+      cor("#mensagem", "background", "Tela de início e fim", "#ffffff", "superficie"),
+      cor("#mensagem", "color", "Texto da tela de início e fim", "#222222", "textoSup"),
+      cor("#mensagem button", "background", "Botão Começar", "#8e1b3a", "botao"),
+      cor("#mensagem button", "color", "Texto do botão Começar", "#ffffff", "textoBotao"),
+      letra(),
+      tamanho(".patogeno", "Tamanho dos patógenos", 28, 90, 46)
+    ],
+    pares: [
+      cor("body", "background", "Fundo da página", "#2d1e4a", "fundo"),
+      cor("body", "color", "Texto da página", "#ffffff", "texto"),
+      cor(".carta", "background", "Carta fechada", "#7b5cc4", "botao"),
+      cor(".carta", "color", "Texto da carta fechada", "#ffffff", "textoBotao"),
+      cor(".carta.virada", "background", "Carta aberta", "#ffffff", "superficie"),
+      cor(".carta.virada", "color", "Texto da carta aberta", "#2d1e4a", "textoSup"),
+      cor(".carta.achou", "background", "Par encontrado", "#06d6a0"),
+      letra(),
+      colunas("repeat(3, 1fr)"),
+      tamanho(".carta", "Tamanho do texto das cartas", 11, 22, 14)
+    ],
+    historia: [
+      cor("body", "background", "Fundo da página", "#fff4e6", "fundo"),
+      cor("body", "color", "Texto da história", "#3b2314", "texto"),
+      cor(".escolha", "background", "Botões de escolha", "#ffffff", "superficie"),
+      cor(".escolha", "color", "Texto dos botões", "#3b2314", "textoSup"),
+      cor(".escolha", "border-color", "Borda dos botões", "#c0562a", "botao"),
+      letra("Georgia, 'Times New Roman', serif"),
+      tamanho(".emoji", "Tamanho do emoji", 40, 140, 80),
+      tamanho("p", "Tamanho do texto", 14, 26, 18)
+    ],
+    ordem: [
+      cor("body", "background", "Fundo da página", "#e8f6f3", "fundo"),
+      cor("body", "color", "Texto da página", "#123c35", "texto"),
+      cor(".etapa", "background", "Botões das etapas", "#ffffff", "superficie"),
+      cor(".etapa", "color", "Texto das etapas", "#123c35", "textoSup"),
+      cor(".etapa", "border-color", "Borda das etapas", "#1b7f6b", "botao"),
+      cor("ol", "background", "Lista das etapas certas", "#1b7f6b", "botao"),
+      cor("ol", "color", "Texto da lista", "#ffffff", "textoBotao"),
+      cor("#seguir", "background", "Botão Próxima sequência", "#123c35", "botao"),
+      letra()
+    ],
+    vf: [
+      cor("body", "background", "Fundo da página", "#fff8d6", "fundo"),
+      cor("body", "color", "Texto da página", "#2a2a2a", "texto"),
+      cor("h1", "color", "Título", "#1d4ed8", "destaque"),
+      cor(".frase", "background", "Caixa da frase", "#ffffff", "superficie"),
+      cor(".frase", "color", "Texto da frase", "#2a2a2a", "textoSup"),
+      cor("#fato", "background", "Botão Fato", "#16a34a"),
+      cor("#fake", "background", "Botão Fake", "#dc2626"),
+      cor("#seguir", "background", "Botão Próxima", "#1d4ed8", "botao"),
+      letra(),
+      tamanho(".frase", "Tamanho da frase", 14, 28, 19)
+    ],
+    branco: [
+      cor("body", "background", "Fundo da página", "#eef6ff", "fundo"),
+      cor("body", "color", "Texto da página", "#1e2a44", "texto"),
+      cor("h1", "color", "Título", "#d6336c", "destaque"),
+      cor("button", "background", "Botões", "#1e2a44", "botao"),
+      cor("button", "color", "Texto dos botões", "#ffffff", "textoBotao"),
+      letra(),
+      tamanho("p", "Tamanho do texto", 14, 28, 16)
+    ]
+  };
+
+  var RE_BLOCO = /\n?<style id="aparencia">[\s\S]*?<\/style>/;
+
+  function lerBloco(codigo) {
+    var mapa = {};
+    var m = codigo.match(RE_BLOCO);
+    if (!m) { return mapa; }
+    var css = m[0].replace(/^[\s\S]*?<style id="aparencia">/, "").replace(/<\/style>$/, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    css.replace(/([^{}]+)\{([^}]*)\}/g, function (_, sel, decl) {
+      sel = sel.trim();
+      decl.split(";").forEach(function (d) {
+        var i = d.indexOf(":");
+        if (i < 0) { return; }
+        mapa[sel + "|" + d.slice(0, i).trim()] = d.slice(i + 1).trim();
+      });
+      return "";
+    });
+    return mapa;
+  }
+
+  function escreverBloco(codigo, mapa, partes) {
+    var chaves = Object.keys(mapa);
+    if (!chaves.length) { return codigo.replace(RE_BLOCO, ""); }
+    var ordem = partes.map(function (p) { return p.sel; });
+    var seletores = [];
+    var porSeletor = {};
+    chaves.forEach(function (k) {
+      var corte = k.indexOf("|");
+      var sel = k.slice(0, corte), prop = k.slice(corte + 1);
+      if (!porSeletor[sel]) { porSeletor[sel] = []; seletores.push(sel); }
+      porSeletor[sel].push(prop + ": " + mapa[k] + ";");
+    });
+    seletores.sort(function (a, b) {
+      var ia = ordem.indexOf(a), ib = ordem.indexOf(b);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
+    var bloco = '<style id="aparencia">\n/* 🎨 Feito na aba Aparência. Apague este bloco para voltar ao visual original. */\n' +
+      seletores.map(function (s) { return s + " { " + porSeletor[s].join(" ") + " }"; }).join("\n") + "\n</style>";
+    if (RE_BLOCO.test(codigo)) { return codigo.replace(RE_BLOCO, "\n" + bloco); }
+    if (/<\/head>/i.test(codigo)) { return codigo.replace(/<\/head>/i, bloco + "\n</head>"); }
+    return bloco + "\n" + codigo;
+  }
+
+  var timerAparencia;
+  function aplicarNoCodigo(novoCodigo) {
+    editor.value = novoCodigo;
+    $("status").textContent = "Salvando";
+    desagendar(timerAparencia);
+    timerAparencia = agendar(function () { salvarAgora(); rodar(); }, 300);
+  }
+  function mudarValor(parte, valor) {
+    var partes = APARENCIA[projeto.tipo] || APARENCIA.branco;
+    var mapa = lerBloco(editor.value);
+    mapa[parte.sel + "|" + parte.prop] = valor;
+    aplicarNoCodigo(escreverBloco(editor.value, mapa, partes));
+  }
+
+  function hexValido(v, padrao) { return /^#[0-9a-f]{6}$/i.test(v || "") ? v : padrao; }
+  function textoParaHtml(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function htmlParaTexto(t) { return t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&"); }
+
+  function desenharAparencia() {
+    if (!projeto) { return; }
+    var cont = $("apConteudo");
+    cont.innerHTML = "";
+    var partes = APARENCIA[projeto.tipo] || APARENCIA.branco;
+    var mapa = lerBloco(editor.value);
+
+    cont.appendChild(el("h2", { text: "Aparência" }));
+    var explica = el("p", { "class": "explica" });
+    explica.appendChild(document.createTextNode("Suas escolhas viram CSS dentro do bloco "));
+    explica.appendChild(el("code", { text: '<style id="aparencia">' }));
+    explica.appendChild(document.createTextNode(" no código. As perguntas e regras do jogo continuam na aba Código."));
+    cont.appendChild(explica);
+
+    // Temas
+    cont.appendChild(el("h3", { text: "Temas prontos" }));
+    var temas = el("div", { "class": "temas" });
+    TEMAS.forEach(function (t) {
+      var bolas = el("span", { "class": "bolas", "aria-hidden": "true" });
+      [t.fundo, t.superficie, t.botao, t.destaque].forEach(function (c) {
+        var i = document.createElement("i"); i.style.background = c; bolas.appendChild(i);
+      });
+      var b = el("button", { "class": "tema" }, [bolas, el("span", { text: t.nome })]);
+      b.addEventListener("click", function () {
+        var m = lerBloco(editor.value);
+        partes.forEach(function (p) { if (p.papel && t[p.papel]) { m[p.sel + "|" + p.prop] = t[p.papel]; } });
+        aplicarNoCodigo(escreverBloco(editor.value, m, partes));
+        desenharAparencia();
+        aviso("Tema " + t.nome + " aplicado");
+      });
+      temas.appendChild(b);
+    });
+    cont.appendChild(temas);
+
+    // Título (HTML)
+    var achouTitulo = editor.value.match(/<h1>([^<]*)<\/h1>/i);
+    if (achouTitulo) {
+      cont.appendChild(el("h3", { text: "Título do jogo" }));
+      var campo = el("input", { "class": "campo-texto", type: "text", maxlength: "60", "aria-label": "Título do jogo" });
+      campo.value = htmlParaTexto(achouTitulo[1]);
+      campo.addEventListener("input", function () {
+        aplicarNoCodigo(editor.value.replace(/<h1>[^<]*<\/h1>/i, "<h1>" + textoParaHtml(campo.value) + "</h1>"));
+      });
+      cont.appendChild(campo);
+    }
+
+    // Cores
+    cont.appendChild(el("h3", { text: "Cores" }));
+    partes.forEach(function (p, n) {
+      if (p.tipo !== "cor") { return; }
+      var id = "ap-" + n;
+      var entrada = el("input", { type: "color", id: id });
+      entrada.value = hexValido(mapa[p.sel + "|" + p.prop], p.padrao);
+      entrada.addEventListener("input", function () { mudarValor(p, entrada.value); });
+      cont.appendChild(el("div", { "class": "linha" }, [el("label", { "for": id, text: p.rotulo }), entrada]));
+    });
+
+    // Letra e tamanhos
+    cont.appendChild(el("h3", { text: "Letras e tamanhos" }));
+    partes.forEach(function (p, n) {
+      var id = "ap-" + n;
+      var atual = mapa[p.sel + "|" + p.prop];
+      if (p.tipo === "letra" || p.tipo === "colunas") {
+        var sel = el("select", { id: id });
+        var opcoes = p.tipo === "letra" ? LETRAS : [["2 colunas", "repeat(2, 1fr)"], ["3 colunas", "repeat(3, 1fr)"], ["4 colunas", "repeat(4, 1fr)"]];
+        opcoes.forEach(function (o) {
+          var op = el("option", { value: o[1], text: o[0] });
+          if ((atual || p.padrao) === o[1]) { op.selected = true; }
+          sel.appendChild(op);
+        });
+        sel.addEventListener("change", function () { mudarValor(p, sel.value); });
+        cont.appendChild(el("div", { "class": "linha" }, [el("label", { "for": id, text: p.rotulo }), sel]));
+      } else if (p.tipo === "tamanho") {
+        var valor = parseInt(atual, 10) || p.padrao;
+        var saida = el("output", { text: valor + "px" });
+        var faixa = el("input", { type: "range", id: id, min: String(p.min), max: String(p.max), value: String(valor) });
+        faixa.addEventListener("input", function () {
+          saida.textContent = faixa.value + "px";
+          mudarValor(p, faixa.value + "px");
+        });
+        cont.appendChild(el("div", { "class": "linha" }, [el("label", { "for": id, text: p.rotulo }), faixa, saida]));
+      }
+    });
+
+    var restaurar = el("button", { "class": "restaurar", text: "Voltar às cores e letras originais" });
+    restaurar.addEventListener("click", function () {
+      if (!restaurar.classList.contains("confirmar")) {
+        restaurar.classList.add("confirmar");
+        restaurar.textContent = "Toque de novo para confirmar";
+        agendar(function () { restaurar.classList.remove("confirmar"); restaurar.textContent = "Voltar às cores e letras originais"; }, 3000);
+        return;
+      }
+      aplicarNoCodigo(editor.value.replace(RE_BLOCO, ""));
+      desenharAparencia();
+      aviso("Visual original de volta");
+    });
+    cont.appendChild(restaurar);
+  }
+
+  document.querySelectorAll(".alternar button").forEach(function (b) {
+    b.addEventListener("click", function () { irPara(b.getAttribute("data-lado")); });
+  });
+
+  // ---------- rodar o jogo ----------
+  // Alguns ambientes bloqueiam iframes. A página testa três jeitos e usa o primeiro que funcionar:
+  // 1) iframe srcdoc, 2) iframe com blob, 3) direto dentro da página.
+  var palcoInline = $("palcoInline");
+  var modo = null;           // "srcdoc", "blob", "inline" ou "nenhum"
+  var esperandoModo = [];
+  var urlBlob = null;
+  var ESPIAO = '<script>window.onerror=function(m,s,l){try{parent.postMessage({imunolab:"erro",msg:String(m),linha:l},"*")}catch(e){}};try{parent.postMessage({imunolab:"vivo"},"*")}catch(e){}<\/script>';
+
+  function montarDocumento(codigo) {
+    if (/<head[^>]*>/i.test(codigo)) {
+      return codigo.replace(/<head[^>]*>/i, function (t) { return t + ESPIAO; });
+    }
+    return ESPIAO + codigo;
+  }
+
+  function testarIframe(tipo, pronto) {
+    var respondeu = false;
+    var teste = document.createElement("iframe");
+    teste.setAttribute("sandbox", "allow-scripts");
+    teste.style.cssText = "position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-10px;top:-10px";
+    function ouvir(e) {
+      if (e.source === teste.contentWindow && e.data && e.data.imunolab === "vivo") { respondeu = true; terminar(); }
+    }
+    function terminar() {
+      window.removeEventListener("message", ouvir);
+      desagendar(limite);
+      if (tipo === "blob" && teste.src) { try { URL.revokeObjectURL(teste.src); } catch (e) {} }
+      teste.remove();
+      pronto(respondeu);
+    }
+    window.addEventListener("message", ouvir);
+    var limite = agendar(terminar, 2000);
+    var doc = "<!DOCTYPE html><html><head>" + ESPIAO + "</head><body></body></html>";
+    document.body.appendChild(teste);
+    try {
+      if (tipo === "srcdoc") { teste.srcdoc = doc; }
+      else { teste.src = URL.createObjectURL(new Blob([doc], { type: "text/html" })); }
+    } catch (e) { terminar(); }
+  }
+
+  function testarInline() {
+    try {
+      window.__imunolabTeste = false;
+      var s = document.createElement("script");
+      s.textContent = "window.__imunolabTeste = true;";
+      document.head.appendChild(s);
+      s.remove();
+      return window.__imunolabTeste === true;
+    } catch (e) { return false; }
+  }
+
+  function definirModo(m) {
+    modo = m;
+    var fila = esperandoModo;
+    esperandoModo = [];
+    fila.forEach(function (f) { f(); });
+  }
+
+  function detectarModo() {
+    var forcado = (location.search.match(/[?&]modo=(\w+)/) || [])[1];
+    if (forcado === "inline") { definirModo(testarInline() ? "inline" : "nenhum"); return; }
+    testarIframe("srcdoc", function (ok) {
+      if (ok) { definirModo("srcdoc"); return; }
+      testarIframe("blob", function (ok2) {
+        if (ok2) { definirModo("blob"); return; }
+        definirModo(testarInline() ? "inline" : "nenhum");
+      });
+    });
+  }
+
+  function rodar() {
+    if (!projeto) { return; }
+    if (!modo) { esperandoModo = [rodar]; return; }
+    esconderErro();
+    var codigo = editor.value;
+    if (modo === "srcdoc" || modo === "blob") {
+      palcoInline.style.display = "none";
+      palco.style.display = "";
+      if (urlBlob) { URL.revokeObjectURL(urlBlob); urlBlob = null; }
+      if (modo === "srcdoc") {
+        palco.srcdoc = montarDocumento(codigo);
+      } else {
+        urlBlob = URL.createObjectURL(new Blob([montarDocumento(codigo)], { type: "text/html" }));
+        palco.src = urlBlob;
+      }
+    } else if (modo === "inline") {
+      palco.style.display = "none";
+      palcoInline.style.display = "block";
+      rodarInline(codigo);
+    } else {
+      palco.style.display = "none";
+      palcoInline.style.display = "block";
+      limparInline();
+      palcoInline.appendChild(el("div", { "class": "sem-palco" }, [
+        el("b", { text: "Este ambiente não deixa rodar o jogo aqui dentro." }),
+        el("p", { text: "Seu código está salvo. Toque em ⋯ e use Baixar arquivo para abrir o jogo no navegador, ou peça ao professor o link da versão da turma." })
+      ]));
+    }
+  }
+
+  function pararJogo() {
+    if (modo === "inline") { limparInline(); }
+    else { palco.removeAttribute("srcdoc"); palco.removeAttribute("src"); }
+  }
+
+  // ----- modo direto na página -----
+  var timersAluno = [];
+  var intervalosAluno = [];
+  var linhaBaseScript = 0;
+  var stInterno = window.setTimeout, siInterno = window.setInterval;
+  var ctInterno = window.clearTimeout, ciInterno = window.clearInterval;
+  function ativarRelogiosDoAluno() {
+    window.setTimeout = function () { var id = stInterno.apply(window, arguments); timersAluno.push(id); return id; };
+    window.setInterval = function () { var id = siInterno.apply(window, arguments); intervalosAluno.push(id); return id; };
+  }
+  function limparInline() {
+    timersAluno.forEach(function (id) { ctInterno.call(window, id); });
+    intervalosAluno.forEach(function (id) { ciInterno.call(window, id); });
+    timersAluno = [];
+    intervalosAluno = [];
+    palcoInline.innerHTML = "";
+  }
+
+  function escoparSeletor(sel) {
+    sel = sel.trim();
+    if (!sel) { return sel; }
+    if (/^(html|body|:root)\b/i.test(sel)) { return sel.replace(/^(html\s+body|html|body|:root)/i, ".palco-body"); }
+    return ".palco-body " + sel;
+  }
+  function escoparCss(css) {
+    css = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    var saida = "", i = 0;
+    while (i < css.length) {
+      var abre = css.indexOf("{", i);
+      if (abre === -1) { saida += css.slice(i); break; }
+      var cabeca = css.slice(i, abre);
+      var nivel = 1, j = abre + 1;
+      while (j < css.length && nivel > 0) {
+        if (css[j] === "{") { nivel++; } else if (css[j] === "}") { nivel--; }
+        j++;
+      }
+      var miolo = css.slice(abre + 1, j - 1);
+      var cab = cabeca.trim();
+      if (/^@(media|supports)/i.test(cab)) {
+        saida += cabeca + "{" + escoparCss(miolo) + "}";
+      } else if (/^@/.test(cab)) {
+        saida += cabeca + "{" + miolo + "}";
+      } else {
+        saida += cabeca.split(",").map(escoparSeletor).join(", ") + "{" + miolo + "}";
+      }
+      i = j;
+    }
+    return saida.replace(/(\d+(?:\.\d+)?)vh/g, function (_, n) { return "calc(var(--palco-h) * " + (parseFloat(n) / 100) + ")"; });
+  }
+
+  function rodarInline(codigo) {
+    limparInline();
+    var doc = new DOMParser().parseFromString(codigo, "text/html");
+    palcoInline.style.setProperty("--palco-h", palcoInline.clientHeight + "px");
+    var css = "";
+    doc.querySelectorAll("style").forEach(function (s) { css += s.textContent + "\n"; });
+    var estilo = document.createElement("style");
+    estilo.textContent = escoparCss(css);
+    palcoInline.appendChild(estilo);
+    var corpo = document.createElement("div");
+    corpo.className = "palco-body";
+    var scripts = [];
+    Array.prototype.slice.call(doc.body.childNodes).forEach(function (n) {
+      if (n.nodeName === "SCRIPT") { scripts.push(n.textContent); }
+      else { n.querySelectorAll && n.querySelectorAll("script").forEach(function (s) { scripts.push(s.textContent); s.remove(); }); corpo.appendChild(document.importNode(n, true)); }
+    });
+    palcoInline.appendChild(corpo);
+    ativarRelogiosDoAluno();
+    var procurarDesde = 0;
+    scripts.forEach(function (texto) {
+      var posTag = codigo.indexOf("<script", procurarDesde);
+      var posTexto = posTag === -1 ? -1 : codigo.indexOf(">", posTag) + 1;
+      if (posTexto > 0) { procurarDesde = posTexto; }
+      linhaBaseScript = posTexto > 0 ? codigo.slice(0, posTexto).split("\n").length - 1 : 0;
+      var s = document.createElement("script");
+      s.textContent = texto;
+      try { palcoInline.appendChild(s); } catch (erroScript) { /* o aviso de erro já aparece */ }
+    });
+  }
+  window.addEventListener("error", function (e) {
+    if (modo !== "inline" || !e.lineno) { return; }
+    var arquivoDaPagina = !e.filename || e.filename === location.href || e.filename.split("#")[0] === location.href.split("#")[0];
+    if (!arquivoDaPagina) { return; }
+    mostrarErro(String(e.message).replace(/Failed to execute '\w+' on 'Node': /, ""), e.lineno + linhaBaseScript);
+  });
+  window.alert = window.alert || function () {};
+
+  window.addEventListener("message", function (e) {
+    if (e.source !== palco.contentWindow || !e.data || e.data.imunolab !== "erro") { return; }
+    mostrarErro(e.data.msg, e.data.linha);
+  });
+  function mostrarErro(msg, linha) {
+    linhaDoErro = linha || null;
+    $("erroTexto").innerHTML = "";
+    $("erroTexto").appendChild(document.createTextNode("Algo quebrou" + (linha ? " perto da linha " + linha : "") + ". Confira vírgulas, aspas, chaves e parênteses. "));
+    $("erroTexto").appendChild(el("code", { text: msg }));
+    $("verErro").style.display = linha ? "" : "none";
+    $("erro").classList.add("visivel");
+  }
+  function esconderErro() { $("erro").classList.remove("visivel"); linhaDoErro = null; }
+
+  function irParaLinha(n) {
+    var linhas = editor.value.split("\n");
+    n = Math.max(1, Math.min(n, linhas.length));
+    var pos = 0;
+    for (var i = 0; i < n - 1; i++) { pos += linhas[i].length + 1; }
+    editor.focus();
+    editor.setSelectionRange(pos, pos + linhas[n - 1].length);
+    var alturaLinha = parseFloat(getComputedStyle(editor).lineHeight) || 24;
+    editor.scrollTop = Math.max(0, (n - 4) * alturaLinha);
+    atualizarLinha();
+  }
+
+  function atualizarLinha() {
+    var n = editor.value.slice(0, editor.selectionStart).split("\n").length;
+    $("linhaAtual").textContent = "Linha " + n;
+  }
+  ["keyup", "click", "select"].forEach(function (ev) { editor.addEventListener(ev, atualizarLinha); });
+
+  // ---------- inserir texto ----------
+  function inserir(texto, voltar) {
+    editor.focus();
+    var ok = false;
+    try { ok = document.execCommand("insertText", false, texto); } catch (e) { ok = false; }
+    if (!ok) {
+      var ini = editor.selectionStart, fim = editor.selectionEnd;
+      editor.setRangeText(texto, ini, fim, "end");
+      editor.dispatchEvent(new Event("input"));
+    }
+    if (voltar) {
+      var p = editor.selectionStart - voltar;
+      editor.setSelectionRange(p, p);
+    }
+    atualizarLinha();
+  }
+  editor.addEventListener("keydown", function (e) {
+    if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); inserir("  "); }
+  });
+
+  var teclas = $("teclas");
+  teclas.addEventListener("pointerdown", function (e) {
+    if (e.target.closest("button[data-tecla]")) { e.preventDefault(); }
+  });
+  teclas.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) { return; }
+    if (b.hasAttribute("data-tecla")) {
+      inserir(b.getAttribute("data-tecla"), parseInt(b.getAttribute("data-volta") || "0", 10));
+    } else if (b.getAttribute("data-abrir") === "inserir") {
+      folhaInserir();
+    } else if (b.getAttribute("data-abrir") === "emojis") {
+      folhaEmojis();
+    }
+  });
+
+  // ---------- folha inferior ----------
+  var ultimoFoco = null;
+  function abrirFolha(montar) {
+    ultimoFoco = document.activeElement;
+    var c = $("folhaConteudo");
+    c.innerHTML = "";
+    montar(c);
+    $("fundo").classList.add("aberto");
+    $("folha").classList.add("aberta");
+    var primeiro = c.querySelector("button");
+    if (primeiro) { primeiro.focus({ preventScroll: true }); }
+  }
+  function fecharFolha() {
+    $("fundo").classList.remove("aberto");
+    $("folha").classList.remove("aberta");
+    if (ultimoFoco && ultimoFoco.focus && ultimoFoco !== editor) { ultimoFoco.focus({ preventScroll: true }); }
+  }
+  $("fundo").addEventListener("click", fecharFolha);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { fecharFolha(); } });
+
+  function itemFolha(titulo, sub, acao, classe) {
+    var b = el("button", { "class": "item" + (classe ? " " + classe : "") }, [el("b", { text: titulo }), el("small", { text: sub })]);
+    b.addEventListener("click", acao);
+    return b;
+  }
+
+  function folhaInserir() {
+    abrirFolha(function (c) {
+      c.appendChild(el("h3", { text: "Inserir no código" }));
+      c.appendChild(el("p", { "class": "dica", text: "O trecho entra onde o cursor estava. Leia a dica de cada um para saber onde colocar." }));
+      var m = projeto ? modeloDe(projeto.tipo) : null;
+      var lista = (m ? m.snippets : []).concat(SNIPPETS_GERAIS);
+      lista.forEach(function (s) {
+        c.appendChild(itemFolha(s.nome, s.ajuda, function () { fecharFolha(); inserir(s.codigo); }));
+      });
+    });
+  }
+
+  function folhaEmojis() {
+    abrirFolha(function (c) {
+      c.appendChild(el("h3", { text: "Emojis" }));
+      c.appendChild(el("p", { "class": "dica", text: "Use dentro de aspas no código ou direto no texto da página." }));
+      var grade = el("div", { "class": "emojis" });
+      EMOJIS.forEach(function (em) {
+        var b = el("button", { text: em, "aria-label": "Inserir " + em });
+        b.addEventListener("click", function () { fecharFolha(); inserir(em); });
+        grade.appendChild(b);
+      });
+      c.appendChild(grade);
+    });
+  }
+
+  function folhaMenu() {
+    abrirFolha(function (c) {
+      c.appendChild(el("h3", { text: projeto ? projeto.nome : "Projeto" }));
+      c.appendChild(el("p", { "class": "dica", text: "Para entregar, baixe o arquivo ou copie o código e envie ao professor." }));
+      c.appendChild(itemFolha("Baixar arquivo .html", "Abre em qualquer navegador, até sem internet.", function () { fecharFolha(); baixar(); }));
+      c.appendChild(itemFolha("Copiar código", "Para colar numa mensagem ou num documento.", function () { fecharFolha(); copiar(); }));
+      var restaurar = itemFolha("Voltar ao modelo original", "Apaga as suas mudanças neste projeto.", function () {
+        if (!restaurar.classList.contains("confirmar")) {
+          restaurar.classList.add("confirmar");
+          restaurar.querySelector("small").textContent = "Toque de novo para apagar as mudanças.";
+          return;
+        }
+        fecharFolha();
+        editor.value = codigoModelo(projeto.tipo);
+        salvarAgora();
+        rodar();
+        aviso("Modelo restaurado");
+      }, "perigo");
+      c.appendChild(restaurar);
+      c.appendChild(itemFolha("Voltar aos modelos", "Seu projeto continua salvo.", function () { fecharFolha(); irPara("modelos"); }));
+    });
+  }
+  $("abrirMenu").addEventListener("click", folhaMenu);
+
+  // ---------- entregar ----------
+  var downloadsPromessa = (window.claude && typeof window.claude.use === "function")
+    ? window.claude.use("downloads").catch(function () { return null; })
+    : Promise.resolve(null);
+
+  function nomeArquivo() {
+    var base = (projeto.nome || "projeto").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
+    return (base || "projeto") + ".html";
+  }
+  function baixar() {
+    if (!projeto) { return; }
+    salvarAgora();
+    var nome = nomeArquivo();
+    var codigo = editor.value;
+    downloadsPromessa.then(function (downloads) {
+      if (downloads) {
+        downloads.save({ filename: nome, data: codigo })
+          .then(function () { aviso("Arquivo baixado"); })
+          .catch(function (err) {
+            if (err && err.code === "declined") { return; }
+            aviso("Não deu para baixar aqui. Use Copiar código.");
+          });
+        return;
+      }
+      try {
+        var url = URL.createObjectURL(new Blob([codigo], { type: "text/html" }));
+        var a = el("a", { href: url, download: nome });
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        agendar(function () { URL.revokeObjectURL(url); }, 4000);
+      } catch (e) {
+        aviso("Não deu para baixar aqui. Use Copiar código.");
+      }
+    });
+  }
+  function copiar() {
+    var texto = editor.value;
+    function jeitoAntigo() {
+      editor.focus();
+      editor.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      aviso(ok ? "Código copiado" : "Código selecionado. Use copiar do seu celular.");
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(function () { aviso("Código copiado"); }, jeitoAntigo);
+    } else {
+      jeitoAntigo();
+    }
+  }
+
+  // ---------- botões gerais ----------
+  document.querySelectorAll("nav button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var alvo = b.getAttribute("data-ir");
+      if (alvo !== "modelos" && !projeto) { aviso("Escolha um modelo primeiro"); return; }
+      irPara(alvo);
+    });
+  });
+  $("irInicio").addEventListener("click", function () { irPara("modelos"); });
+  $("testar").addEventListener("click", function () { salvarAgora(); irPara("jogo"); });
+  $("atualizar").addEventListener("click", function () { salvarAgora(); rodar(); });
+  $("reiniciar").addEventListener("click", rodar);
+  $("verErro").addEventListener("click", function () {
+    var n = linhaDoErro;
+    $("tela-jogo").classList.remove("cheia");
+    $("telaCheia").textContent = "⛶ Tela cheia";
+    if (!larguraGrande.matches) { document.body.setAttribute("data-tela", "codigo"); marcarNav("codigo"); }
+    if (n) { agendar(function () { irParaLinha(n); }, 50); }
+  });
+  function marcarNav(tela) {
+    document.querySelectorAll("nav button").forEach(function (b) {
+      if (b.getAttribute("data-ir") === tela) { b.setAttribute("aria-current", "page"); } else { b.removeAttribute("aria-current"); }
+    });
+  }
+  $("telaCheia").addEventListener("click", function () {
+    var cheia = $("tela-jogo").classList.toggle("cheia");
+    this.textContent = cheia ? "✕ Sair da tela cheia" : "⛶ Tela cheia";
+  });
+  window.addEventListener("beforeunload", salvarAgora);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) { salvarAgora(); } });
+
+  // ---------- início ----------
+  carregar();
+  detectarModo();
+  desenharModelos();
+  irPara("modelos");
+})();
+</script>
+</body>
+</html>
